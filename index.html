@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bestell-App Pharma</title>
+    <style>
+        :root {
+            --brand-blue: #005293;
+            --light-bg: #f8fafc;
+            --border-grey: #cbd5e1;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 10px;
+            color: #1e293b;
+        }
+
+        .container {
+            background: white;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--brand-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--light-bg);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .info-field label { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; }
+        .info-field div { font-weight: 600; }
+
+        /* Desktop Tabelle / Mobile Cards */
+        .order-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .order-table thead { background: var(--brand-blue); color: white; }
+        .order-table th, .order-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+
+        .cat-head { background: #e2e8f0; font-weight: bold; color: var(--brand-blue); }
+
+        /* Mobile Anpassungen */
+        @media (max-width: 600px) {
+            .order-table thead { display: none; }
+            .order-table tr { 
+                display: block; 
+                margin-bottom: 15px; 
+                border: 1px solid var(--border-grey); 
+                border-radius: 8px;
+                padding: 10px;
+                background: white;
+            }
+            .order-table td { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+                border: none;
+                padding: 5px 0;
+            }
+            .order-table td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                font-size: 12px;
+                color: #64748b;
+            }
+            .product-name { font-size: 16px; font-weight: bold; color: var(--brand-blue); display: block !important; margin-bottom: 10px; border-bottom: 1px solid #eee !important; padding-bottom: 5px !important; }
+            .cat-head { border: none !important; margin-top: 20px; border-radius: 4px; }
+            
+            .sig-container { width: 100% !important; }
+        }
+
+        select {
+            padding: 8px;
+            border: 2px solid var(--brand-blue);
+            border-radius: 6px;
+            background: #fff;
+            font-size: 16px; /* Verhindert Auto-Zoom auf iOS */
+            width: 80px;
+        }
+
+        .sig-container { margin-top: 30px; width: 400px; }
+        .sig-box { border: 2px dashed #94a3b8; background: #fff; height: 150px; position: relative; border-radius: 8px; touch-action: none; }
+        canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+
+        .footer-action {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .total-sticky {
+            position: sticky;
+            bottom: 10px;
+            background: var(--brand-blue);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-submit {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .btn-clear { background: none; border: 1px solid #94a3b8; color: #64748b; padding: 5px 10px; border-radius: 4px; font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h2 style="margin:0; color: var(--brand-blue);">Bestellung</h2>
+        <small>Löwen-Apotheke | Kundennummer: KD-99200-X</small>
+    </header>
+
+    <div class="info-grid">
+        <div class="info-field"><label>Anschrift</label><div>Hauptstraße 12, 12345 Musterstadt</div></div>
+        <div class="info-field"><label>Datum</label><div id="date"></div></div>
+    </div>
+
+    <form id="orderForm">
+        <table class="order-table">
+            <thead>
+                <tr>
+                    <th>Produkt</th>
+                    <th>PZN</th>
+                    <th>AEP</th>
+                    <th>Menge</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="cat-head"><td colspan="4">Grippostad®</td></tr>
+                <tr class="product-row" data-price="9.65">
+                    <td class="product-name">Grippostad® C Kapseln (24 St.)</td>
+                    <td data-label="PZN">00571748</td>
+                    <td data-label="Preis">9,65 €</td>
+                    <td data-label="Menge"><select class="qty"></select></td>
+                </tr>
+                <tr class="product-row" data-price="5.55">
+                    <td class="product-name">Grippostad® Complex (10 St.)</td>
+                    <td data-label="PZN">16903460</td>
+                    <td data-label="Preis">5,55 €</td>
+                    <td data-label="Menge"><select class="qty"></select></td>
+                </tr>
+
+                <tr class="cat-head"><td colspan="4">LEMOCIN®</td></tr>
+                <tr class="product-row" data-price="5.49">
+                    <td class="product-name">Lemocin® Halsschmerz (20 St.)</td>
+                    <td data-label="PZN">12397155</td>
+                    <td data-label="Preis">5,49 €</td>
+                    <td data-label="Menge"><select class="qty"></select></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="sig-container">
+            <label style="font-weight:bold; font-size: 13px;">Digitale Unterschrift</label>
+            <div class="sig-box">
+                <canvas id="sigCanvas"></canvas>
+            </div>
+            <button type="button" class="btn-clear" onclick="clearSig()">Feld leeren</button>
+        </div>
+
+        <div class="footer-action">
+            <div class="total-sticky">
+                <span>Gesamt Netto:</span>
+                <span id="totalSum" style="font-size: 20px; font-weight: bold;">0,00 €</span>
+            </div>
+            <button type="submit" class="btn-submit">JETZT BESTELLEN</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('date').textContent = new Date().toLocaleDateString('de-DE');
+
+    // Dropdowns & Kalkulation
+    const selects = document.querySelectorAll('.qty');
+    selects.forEach(sel => {
+        for(let i=0; i<=50; i++) {
+            let opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = i;
+            sel.appendChild(opt);
+        }
+        sel.addEventListener('change', () => {
+            let sum = 0;
+            document.querySelectorAll('.product-row').forEach(row => {
+                const price = parseFloat(row.getAttribute('data-price'));
+                const amount = parseInt(row.querySelector('.qty').value) || 0;
+                sum += price * amount;
+            });
+            document.getElementById('totalSum').textContent = sum.toLocaleString('de-DE', {style: 'currency', currency: 'EUR'});
+        });
+    });
+
+    // Canvas Unterschrift
+    const canvas = document.getElementById('sigCanvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function initCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        ctx.strokeStyle = "#2563eb";
+        ctx.lineWidth = 3;
+        ctx.lineJoin = "round";
+    }
+
+    window.onload = initCanvas;
+    window.onresize = initCanvas;
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function start(e) { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); }
+    function move(e) { 
+        if(!drawing) return; 
+        e.preventDefault(); 
+        const p = getPos(e); 
+        ctx.lineTo(p.x, p.y); 
+        ctx.stroke(); 
+    }
+    function stop() { drawing = false; }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', stop);
+    canvas.addEventListener('touchstart', start, {passive: false});
+    canvas.addEventListener('touchmove', move, {passive: false});
+    canvas.addEventListener('touchend', stop);
+
+    function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    document.getElementById('orderForm').onsubmit = (e) => {
+        e.preventDefault();
+        alert("Bestellung gesendet!");
+    };
+</script>
+
+</body>
+</html>
